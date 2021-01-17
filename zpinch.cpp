@@ -60,8 +60,10 @@ void MeshBlock::ProblemGenerator(ParameterInput *pin) {
   Real rin = pin->GetOrAddReal("problem","rin",0.5);
   Real zupperb = pin->GetOrAddReal("problem","zupperbound",1.0);
   Real zlowerb = pin->GetOrAddReal("problem","zlowerbound",0.0);
-  Real presin = pin->GetOrAddReal("problem","pressure",10.0);
-  Real denin = pin->GetOrAddReal("problem","density",1.0);
+  Real presout = pin->GetOrAddReal("problem","pamb",0.1);
+  Real presin = pin->GetOrAddReal("problem","prat",100.0) * presout;
+  Real denout = pin->GetOrAddReal("problem","damb",1.0);
+  Real denin = pin->GetOrAddReal("problem","drat",1.0) * denout;
 
   Real b0, angle;
   if (MAGNETIC_FIELDS_ENABLED) {
@@ -126,8 +128,8 @@ void MeshBlock::ProblemGenerator(ParameterInput *pin) {
 
         //hydro_u init
         
-        Real den = 0.0;
-        Real pres = 0.0;
+        Real den = denout;
+        Real pres = presout;
         if (zcoo < zupperb) {
           if (zcoo > zlowerb) {
             if (rad < rin) {
@@ -144,8 +146,6 @@ void MeshBlock::ProblemGenerator(ParameterInput *pin) {
         if (NON_BAROTROPIC_EOS) {
           phydro->u(IEN,k,j,i) = pres/gm1;
           phydro->u(IEN,k,j,i) += 0.5 * den * (v1*v1 + v2*v2 + v3*v3);
-          if (RELATIVISTIC_DYNAMICS)  // this should only ever be SR with this file
-            phydro->u(IEN,k,j,i) += den;
         }
       }
     }
