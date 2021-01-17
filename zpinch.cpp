@@ -57,6 +57,7 @@ void MeshBlock::ProblemGenerator(ParameterInput *pin) {
   Real v1 = pin->GetOrAddReal("problem", "v1_0", 0.0);
   Real v2 = pin->GetOrAddReal("problem", "v2_0", 0.0);
   Real v3 = pin->GetOrAddReal("problem", "v3_0", 1.0);
+　Real rin = pin->GetOrAddReal("problem","rin",0.5);
   Real zupperb = pin->GetOrAddReal("problem","zupperbound",1.0);
   Real zlowerb = pin->GetOrAddReal("problem","zlowerbound",0.0);
   Real pres = pin->GetOrAddReal("problem","pressure",10.0);
@@ -113,7 +114,7 @@ void MeshBlock::ProblemGenerator(ParameterInput *pin) {
           Real y = pcoord->x1v(i)*std::sin(pcoord->x2v(j));
           Real z = pcoord->x3v(k);
           zcoo = z;
-          //rad = std::sqrt(SQR(x - x0) + SQR(y - y0) + SQR(z - z0));
+          rad = std::sqrt(SQR(x - x0) + SQR(y - y0) + SQR(z - z0));
         } else { // if (std::strcmp(COORDINATE_SYSTEM, "spherical_polar") == 0)
           Real x = pcoord->x1v(i)*std::sin(pcoord->x2v(j))*std::cos(pcoord->x3v(k));
           Real y = pcoord->x1v(i)*std::sin(pcoord->x2v(j))*std::sin(pcoord->x3v(k));
@@ -126,9 +127,10 @@ void MeshBlock::ProblemGenerator(ParameterInput *pin) {
         //hydro_u init
         if (zcoo < zupperb) {
           if (zcoo > zlowerb) {
-            phydro->u(IDN,k,j,i) = den;
-            phydro->u(IM3,k,j,i) = den * v3;
-            
+            if (rad < rin) {
+              phydro->u(IDN,k,j,i) = den;
+              phydro->u(IM3,k,j,i) = den * v3;
+            }
           }
         }else {
           phydro->u(IDN,k,j,i) = 0.0;
