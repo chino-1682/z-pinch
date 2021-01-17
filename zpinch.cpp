@@ -60,8 +60,8 @@ void MeshBlock::ProblemGenerator(ParameterInput *pin) {
   Real rin = pin->GetOrAddReal("problem","rin",0.5);
   Real zupperb = pin->GetOrAddReal("problem","zupperbound",1.0);
   Real zlowerb = pin->GetOrAddReal("problem","zlowerbound",0.0);
-  Real pres = pin->GetOrAddReal("problem","pressure",10.0);
-  Real den = pin->GetOrAddReal("problem","density",1.0);
+  Real presin = pin->GetOrAddReal("problem","pressure",10.0);
+  Real denin = pin->GetOrAddReal("problem","density",1.0);
 
   Real b0, angle;
   if (MAGNETIC_FIELDS_ENABLED) {
@@ -125,20 +125,19 @@ void MeshBlock::ProblemGenerator(ParameterInput *pin) {
 
 
         //hydro_u init
+        
+        Real den = 0.0;
+        Real pres = 0.0;
         if (zcoo < zupperb) {
           if (zcoo > zlowerb) {
             if (rad < rin) {
-              phydro->u(IDN,k,j,i) = den;
-              phydro->u(IM3,k,j,i) = den * v3;
-            }else{
-              phydro->u(IDN,k,j,i) = 0.0;
-          phydro->u(IM3,k,j,i) = 0.0;
-          den = 0.0;
-          pres = 0.0;
+              den = denin;
+              pres = presin;
             }
           }
         }
-
+        phydro->u(IDN,k,j,i) = den;
+        phydro->u(IM3,k,j,i) = den * v3;
         phydro->u(IM1,k,j,i) = 0.0;
         phydro->u(IM2,k,j,i) = 0.0;
         
