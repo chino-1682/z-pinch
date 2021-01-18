@@ -52,13 +52,13 @@ void Mesh::InitUserMeshData(ParameterInput *pin) {
 //========================================================================================
 
 void MeshBlock::ProblemGenerator(ParameterInput *pin) {
-  Real rout = pin->GetReal("problem", "radius");
-  Real rin  = rout - pin->GetOrAddReal("problem", "ramp", 0.0);
-  Real pa   = pin->GetOrAddReal("problem", "pamb", 1.0);
-  Real da   = pin->GetOrAddReal("problem", "damb", 1.0);
-  Real prat = pin->GetReal("problem", "prat");
-  Real drat = pin->GetOrAddReal("problem", "drat", 1.0);
-  Real b0, angle;
+  Real rin = pin->GetOrAddReal("problem","rin",0.5);
+  Real zupperb = pin->GetOrAddReal("problem","zupperbound",1.0);
+  Real zlowerb = pin->GetOrAddReal("problem","zlowerbound",0.0);
+  Real pres = pin->GetOrAddReal("problem","pamb",0.1);
+  Real prat = pin->GetOrAddReal("problem","prat",100.0);
+  Real den = pin->GetOrAddReal("problem","damb",1.0);
+  Real drat = pin->GetOrAddReal("problem","drat",1.0);
   if (MAGNETIC_FIELDS_ENABLED) {
     b0 = pin->GetReal("problem", "b0");
     angle = (PI/180.0)*pin->GetReal("problem", "angle");
@@ -96,6 +96,7 @@ void MeshBlock::ProblemGenerator(ParameterInput *pin) {
     for (int j=js; j<=je; j++) {
       for (int i=is; i<=ie; i++) {
         Real rad;
+        Real zcoo;
         if (std::strcmp(COORDINATE_SYSTEM, "cartesian") == 0) {
           Real x = pcoord->x1v(i);
           Real y = pcoord->x2v(j);
@@ -105,7 +106,8 @@ void MeshBlock::ProblemGenerator(ParameterInput *pin) {
           Real x = pcoord->x1v(i)*std::cos(pcoord->x2v(j));
           Real y = pcoord->x1v(i)*std::sin(pcoord->x2v(j));
           Real z = pcoord->x3v(k);
-          rad = std::sqrt(SQR(x - x0) + SQR(y - y0) + SQR(z - z0));
+          zcoo = z;
+          rad = pcoord->x1v(i);
         } else { // if (std::strcmp(COORDINATE_SYSTEM, "spherical_polar") == 0)
           Real x = pcoord->x1v(i)*std::sin(pcoord->x2v(j))*std::cos(pcoord->x3v(k));
           Real y = pcoord->x1v(i)*std::sin(pcoord->x2v(j))*std::sin(pcoord->x3v(k));
@@ -113,7 +115,7 @@ void MeshBlock::ProblemGenerator(ParameterInput *pin) {
           rad = std::sqrt(SQR(x - x0) + SQR(y - y0) + SQR(z - z0));
         }
 
-        Real den = da;
+        /*
         if (rad < rout) {
           if (rad < rin) {
             den = drat*da;
@@ -123,6 +125,16 @@ void MeshBlock::ProblemGenerator(ParameterInput *pin) {
             den = std::exp(log_den);
           }
         }
+        */
+       
+        if (zcoo < zupperb) {
+          if (zcoo > zlowerb) {
+            if (rad < rin) {
+              den = denin;
+              pres = presin;
+            }
+          }
+        }
 
         phydro->u(IDN,k,j,i) = den;
         phydro->u(IM1,k,j,i) = 0.0;
@@ -130,18 +142,13 @@ void MeshBlock::ProblemGenerator(ParameterInput *pin) {
         phydro->u(IM3,k,j,i) = 0.0;
         if (NON_BAROTROPIC_EOS) {
           Real pres = pa;
-          if (rad < rout) {
-            if (rad < rin) {
-              pres = prat*pa;
-            } else {  // add smooth ramp in pressure
-              Real f = (rad-rin) / (rout-rin);
-              Real log_pres = (1.0-f) * std::log(prat*pa) + f * std::log(pa);
-              pres = std::exp(log_pres);
-            }
-          }
-          phydro->u(IEN,k,j,i) = pres/gm1;
-          if (RELATIVISTIC_DYNAMICS)  // this should only ever be SR with this file
-            phydro->u(IEN,k,j,i) += den;
+          if (rad < rin) {
+              pres = prat*pres;
+          } 
+        }
+        phydro->u(IEN,k,j,i) = pres/gm1;
+        if (RELATIVISTIC_DYNAMICS) { // this should only ever be SR with this file
+          phydro->u(IEN,k,j,i) += den;
         }
       }
     }
