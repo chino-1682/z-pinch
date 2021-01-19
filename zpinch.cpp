@@ -162,7 +162,11 @@ void MeshBlock::ProblemGenerator(ParameterInput *pin) {
             Real y = pcoord->x2v(j);
             Real z = pcoord->x3v(k);
             Real rad = std::sqrt(x*x+y*y);
-            pfield->b.x1f(k,j,i) = b0 * y / rad / rad;
+            if (rad > 0.5) {
+              pfield->b.x1f(k,j,i) = b0 * y / rad / rad;
+            }else{
+              pfield->b.x1f(k,j,i) = 0.0;
+            }
           } else if (std::strcmp(COORDINATE_SYSTEM, "cylindrical") == 0) {
             Real phi = pcoord->x2v(j);
             pfield->b.x1f(k,j,i) =
@@ -185,7 +189,12 @@ void MeshBlock::ProblemGenerator(ParameterInput *pin) {
             Real y = pcoord->x2v(j);
             Real z = pcoord->x3v(k);
             Real rad = std::sqrt(x*x+y*y);
-            pfield->b.x2f(k,j,i) = - b0 * x / rad / rad;
+            if (rad > 0.5) {
+              pfield->b.x2f(k,j,i) = - b0 * x / rad / rad;
+            }else{
+              pfield->b.x2f(k,j,i) = 0.0;
+            }
+            
           } else if (std::strcmp(COORDINATE_SYSTEM, "cylindrical") == 0) {
             Real phi = pcoord->x2v(j);
             pfield->b.x2f(k,j,i) =
