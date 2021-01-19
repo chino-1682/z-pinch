@@ -106,12 +106,14 @@ void MeshBlock::ProblemGenerator(ParameterInput *pin) {
         
         Real rad;
         Real zcoo;
+        Real theta;
         if (std::strcmp(COORDINATE_SYSTEM, "cartesian") == 0) {
           Real x = pcoord->x1v(i);
           Real y = pcoord->x2v(j);
           Real z = pcoord->x3v(k);
           zcoo = z;
-          rad = sqrt(x*x+y*y);
+          rad = std::sqrt(x*x+y*y);
+          theta = std::atan2(y,x);
           //rad = std::sqrt(SQR(x - x0) + SQR(y - y0) + SQR(z - z0));
         } else if (std::strcmp(COORDINATE_SYSTEM, "cylindrical") == 0) {
           Real x = pcoord->x1v(i)*std::cos(pcoord->x2v(j));
