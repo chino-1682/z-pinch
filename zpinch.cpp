@@ -113,7 +113,6 @@ void MeshBlock::ProblemGenerator(ParameterInput *pin) {
           Real z = pcoord->x3v(k);
           zcoo = z;
           rad = std::sqrt(x*x+y*y);
-          theta = std::atan2(y,x);
           //rad = std::sqrt(SQR(x - x0) + SQR(y - y0) + SQR(z - z0));
         } else if (std::strcmp(COORDINATE_SYSTEM, "cylindrical") == 0) {
           Real x = pcoord->x1v(i)*std::cos(pcoord->x2v(j));
@@ -159,7 +158,11 @@ void MeshBlock::ProblemGenerator(ParameterInput *pin) {
       for (int j=js; j<=je; ++j) {
         for (int i=is; i<=ie+1; ++i) {
           if (std::strcmp(COORDINATE_SYSTEM, "cartesian") == 0) {
-            pfield->b.x1f(k,j,i) = b0 * std::cos(angle);
+            Real x = pcoord->x1v(i);
+            Real y = pcoord->x2v(j);
+            Real z = pcoord->x3v(k);
+            Real rad = std::sqrt(x*x+y*y);
+            pfield->b.x1f(k,j,i) = b0 * y / rad / rad;
           } else if (std::strcmp(COORDINATE_SYSTEM, "cylindrical") == 0) {
             Real phi = pcoord->x2v(j);
             pfield->b.x1f(k,j,i) =
@@ -178,7 +181,11 @@ void MeshBlock::ProblemGenerator(ParameterInput *pin) {
       for (int j=js; j<=je+1; ++j) {
         for (int i=is; i<=ie; ++i) {
           if (std::strcmp(COORDINATE_SYSTEM, "cartesian") == 0) {
-            pfield->b.x2f(k,j,i) = b0 * std::sin(angle);
+            Real x = pcoord->x1v(i);
+            Real y = pcoord->x2v(j);
+            Real z = pcoord->x3v(k);
+            Real rad = std::sqrt(x*x+y*y);
+            pfield->b.x2f(k,j,i) = - b0 * x / rad / rad;
           } else if (std::strcmp(COORDINATE_SYSTEM, "cylindrical") == 0) {
             Real phi = pcoord->x2v(j);
             pfield->b.x2f(k,j,i) =
@@ -212,7 +219,9 @@ void MeshBlock::ProblemGenerator(ParameterInput *pin) {
     for (int k=ks; k<=ke; ++k) {
       for (int j=js; j<=je; ++j) {
         for (int i=is; i<=ie; ++i) {
-          phydro->u(IEN,k,j,i) += 0.5*b0*b0;
+          Real bx = pfield->b.x1f(k,j,i);
+          Real by = pfield->b.x2f(k,j,i);
+          phydro->u(IEN,k,j,i) += 0.5 * sqrt(SQR(bx) + SQR(by));
         }
       }
     }
